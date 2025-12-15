@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+
+body{
+    background-color: #e5eaee;
+    background-image: repeating-linear-gradient(90deg, #f0f0f0 0 1px, #0000 1px 40px), repeating-linear-gradient(#f0f0f0 0 1px, #0000 1px 40px);
+
+    font-family: 'Inter',sans-serif;
+}
+/* flexbox layout */
+.list{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /*row, column, row-reverse, column-reverse  */
+    justify-content: end;       
+    /*justify-content: end value will not work ,because we cant arrange items in two direction at the same time using flexbox */
+    /*how space should be between elemennts ,start center end space-between space-around, space - evenly */
+    gap: 20px;
+}   
+li{
+    list-style-type: none;
+}
+.taskInput{
+    border: 0;
+    padding: 12px;
+    border-radius: 30px 0px 0px 30px;
+
+}
+.taskform{
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 2px;
+}
+.taskBtn{
+    background-color: rebeccapurple;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 0px 30px 30px 0px;
+    cursor: pointer;
+    
+}
+.container{
+    display: flex;
+    padding-top: 20px;
+    justify-content: space-evenly;
+    
+    
+}
+.task{
+    font-weight: 600;
+    font-size: medium;
+}
+.input-add{
+    display: flex;
+}
+.tasksContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+}
