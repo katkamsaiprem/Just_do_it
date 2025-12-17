@@ -1,15 +1,134 @@
-const taskform = document.querySelector(".taskform")
-const taskInput = document.querySelector(".taskInput")
-const addTaskBtn = document.querySelector(".taskBtn")
-const tasksContainer = document.querySelector(".tasksContainer")
-
 
 let TODOS = [];
+let DOM = {}//lets store dom references
 
-document.addEventListener("DOMContentLoaded", () => {//executes when browser renders the html, this event will trigger after js runs
-    const areTodosLoaded = loadTodos()
-    areTodosLoaded && renderTodos(TODOS)//shorthand code for if condition
-})
+const handleTaskDelete = (taskIdToDelete) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) { return }
+    TODOS = TODOS.filter((task) => task.taskId != taskIdToDelete)
+    saveTodosInLocalStorage(TODOS)
+    const listITemToBeRemoved = document.getElementById(taskIdToDelete);
+    listITemToBeRemoved.remove();
+
+}
+
+const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
+    const originalText = taskTextPTag.textContent.trim();
+
+    taskTextPTag.setAttribute("contenteditable", "true");
+    taskTextPTag.classList.remove('task-done')
+
+
+    taskTextPTag.focus()
+
+
+
+    const handleKeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+
+            taskTextPTag.setAttribute("contenteditable", "false");
+            let updatedText = taskTextPTag.textContent.trim();
+            //arr changes
+            TODOS = TODOS.map((taskElement) => taskElement.taskId === tasksIdToEdit ?
+                { ...taskElement, taskText: updatedText } : taskElement)
+
+
+
+            saveTodosInLocalStorage(TODOS);
+
+
+            taskTextPTag.removeEventListener("keydown", handleKeydown);// remove event listeners after usage to avoid memory leaks
+            //Memory leak- when a program doesnt release memory it no longer needs ,causing memory usage to keep growing until the app slow down or crashes
+
+            // taskTextPTag.setAttribute("style", "filter: blur(0.5px)")
+        }
+        if (e.key == "Escape") {
+            e.preventDefault();
+            taskTextPTag.textContent = originalText;
+            taskTextPTag.setAttribute("contenteditable", "false");
+            taskTextPTag.removeEventListener("keydown", handleKeydown)
+
+        }
+    }
+    taskTextPTag.addEventListener("keydown", handleKeydown);
+
+
+}
+
+const handlerClearDoneTasks = () => {
+    if (window.confirm("do you want to Delete all complete tasks?")) {
+        TODOS = TODOS.filter((taskElement) => taskElement.isTaskDone === false)
+        saveTodosInLocalStorage(TODOS)
+
+        DOM.tasksContainer.innerHTML = "";
+        renderTodos(TODOS)
+    }
+}
+
+const handleSubmit = (e) => {
+    e.preventDefault();
+
+    newTaskFunction();
+
+    saveTodosInLocalStorage(TODOS)
+
+    DOM.taskInput.value = "";
+    DOM.taskInput.focus();
+
+}
+
+const newTaskFunction = () => {
+    //trim removes whitespace between start and end
+
+    if (!DOM.taskInput.value.trim()) {
+        alert("enter something")
+        return;
+        //js comes out of function
+    }
+
+    const newTask = {
+        taskId: Math.random(),
+        taskText: DOM.taskInput.value.trim(),
+        isTaskDone: false,
+        timeStamp: new Date(),
+    }
+    console.log(newTask);
+    createAndPushPtag(newTask);
+    TODOS.push(newTask)
+    console.log(TODOS);
+
+}
+
+const handleTaskDone = (taskIdToUpdateIsTaskDone, taskTextPTag) => {
+    for (let index = 0; index < TODOS.length; index++) {
+        if (TODOS[index].taskId == taskIdToUpdateIsTaskDone) {
+            TODOS[index].isTaskDone = !TODOS[index].isTaskDone;
+            TODOS[index].isTaskDone ? taskTextPTag.classList.add("task-done") : taskTextPTag.classList.remove("task-done");
+
+        }
+        saveTodosInLocalStorage(TODOS)
+    }
+
+}
+const initDOM = () => {
+    //----------DOM nodes---------
+    DOM.taskform = document.querySelector(".taskform")
+    DOM.taskInput = document.querySelector(".taskInput")
+    DOM.ddTaskBtn = document.querySelector(".taskBtn")
+    DOM.tasksContainer = document.querySelector(".tasksContainer")
+    DOM.clearButton = document.querySelector(".clear-button")
+
+}
+
+
+
+const saveTodosInLocalStorage = (todos) => {
+    const stringifiedTodos = JSON.stringify(todos);
+    localStorage.setItem("todos", stringifiedTodos);
+    return;
+}
+
 
 function loadTodos() {//gets the string array from local storage ,then converts into orignal data form , if array contains data then create copy of it then push to TODOS
     console.log(TODOS);
@@ -23,73 +142,12 @@ function loadTodos() {//gets the string array from local storage ,then converts 
     return false
 }
 
-const saveTodosInLocalStorage = (todos) => {
-    const stringifiedTodos = JSON.stringify(todos);
-    localStorage.setItem("todos", stringifiedTodos);
-    return;
-
-
-
-
-}
 const renderTodos = (todos) => {
     for (let index = 0; index < todos.length; index++) {
         createAndPushPtag(todos[index])
     }
 }
 
-
-
-const newTaskFunction = () => {
-    //trim removes whitespace between start and end
-
-    if (!taskInput.value.trim()) {
-        alert("enter something")
-        return;
-        //js comes out of function
-    }
-
-    const newTask = {
-        taskId: Math.random(),
-        taskText: taskInput.value.trim(),
-        isTaskDone: true,
-        timeStamp: new Date(),
-    }
-    console.log(newTask);
-    createAndPushPtag(newTask);
-    TODOS.push(newTask)
-    console.log(TODOS);
-
-}
-const handleTaskDelete = (taskIdToDelete) => {
-    TODOS = TODOS.filter((task) => task.taskId != taskIdToDelete)
-    localStorage.setItem("todos", JSON.stringify(TODOS));
-    const listITemToBeRemoved = document.getElementById(taskIdToDelete);
-    listITemToBeRemoved.remove();
-}
-const handleTaskDone = (taskIdToUpdateIsTaskDone) => {
-    for (let index = 0; index < TODOS.length; index++) {
-        if (TODOS[index].taskId == taskIdToUpdateIsTaskDone) {
-            TODOS[index].isTaskDone = !TODOS[index].isTaskDone;
-        }
-        localStorage.setItem("todos", JSON.stringify(TODOS));
-    }
-
-}
-const handleTaskEdit = () => {
-
-}
-taskform.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    newTaskFunction();
-
-    saveTodosInLocalStorage(TODOS)
-
-    taskInput.value = "";
-    taskInput.focus();
-
-})
 const createAndPushPtag = (task) => {
     console.log(task);
 
@@ -100,12 +158,13 @@ const createAndPushPtag = (task) => {
 
     const checkBoxInput = document.createElement("input");
     checkBoxInput.setAttribute("type", "checkbox");
-    checkBoxInput.addEventListener("change", () => handleTaskDone(task.taskId))
+    checkBoxInput.addEventListener("change", () => handleTaskDone(task.taskId, taskTextPTag))
 
     console.log(`before checked ${checkBoxInput.checked}`);
 
     checkBoxInput.checked = task.isTaskDone;
     console.log(`after checked ${checkBoxInput.checked}`);
+
 
 
 
@@ -125,7 +184,8 @@ const createAndPushPtag = (task) => {
 
     const editButton = document.createElement("button");
     editButton.textContent = "Edit";
-    editButton.addEventListener("click", () => handleTaskEdit(task.taskId))
+
+    editButton.addEventListener("click", (e) => handleTaskEdit(task.taskId, taskTextPTag, e))
 
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "delete";
@@ -138,36 +198,28 @@ const createAndPushPtag = (task) => {
     newListItem.appendChild(taskActionButtonContainer);
     newListItem.appendChild(checkBoxInput)
 
-    tasksContainer.appendChild(newListItem)
+    DOM.tasksContainer.prepend(newListItem)
 
 
+    task.isTaskDone ? taskTextPTag.classList.add("task-done") : false
 
 
 
 }
 
-/* 13/12/25
---store todo data inside obj without empty string✔️
+document.addEventListener("DOMContentLoaded", function initApp() {//executes when browser renders the html, this event will trigger after js runs
 
--- newListItem -class name taskItem✔️
--- checkBoxInput -type checkbox , checked should be value of obj prop✔️
+    initDOM();
 
--- taskContentContainer ✔️
--- taskTextPTag -class name task, textContent = obj prop✔️
--- timeStampPTag -textContent=obj prop✔️
+    DOM.clearButton.addEventListener("click", handlerClearDoneTasks)
+    DOM.taskform.addEventListener("submit", handleSubmit)
 
---make two elements as child of taskContentContainer✔️
-
---taskActionButtonContainer✔️
---editButton -textContent = edit✔️
---deleteButton -AeL click and callback✔️
-
---same for deleteButton✔️
-
--append these two as child of taskActionButtonContainer✔️
+    const areTodosLoaded = loadTodos()
+    areTodosLoaded && renderTodos(TODOS)//shorthand code for if condition
 
 
-make taskActionButtonContainer ,taskContentContainer and checkBoxinput as child of newLIstItem✔️
 
-newListItem as child of tasksContainer✔️
-*/
+})
+
+
+

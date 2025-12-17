@@ -68,3 +68,11 @@ li{
     justify-content: center;
     gap: 3rem;
 }
+.taskItem{
+    border: 2px solid rebeccapurple;
+    padding: 2px;
+}
+.task-done{
+     text-decoration:line-through;
+     opacity: 0.5;
+}
