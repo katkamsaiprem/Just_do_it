@@ -12,6 +12,10 @@ const handleTaskDelete = (taskIdToDelete) => {
 
 }
 
+const updateTaskCounts = () => {
+    const totaltasks = TODOS.length;
+
+}
 const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
     const originalText = taskTextPTag.textContent.trim();
 
@@ -135,11 +139,19 @@ const newTaskFunction = () => {
     }
 
 
-    if (!DOM.taskInput.value.trim() || DOM.taskInput.value.trim().length === ThreeChar) {
-        alert("enter something")
+    if (!DOM.taskInput.value.trim() || DOM.taskInput.value.trim().length <= ThreeChar) {
+        DOM.taskInput.setAttribute("placeholder", "ENTER CORRECT TASK")
+        DOM.taskInput.classList.add("input-error");
+
+
         return;
         //js comes out of function
     }
+    else {
+        DOM.taskInput.setAttribute("placeholder", "Enter Today's Task")
+        DOM.taskInput.classList.remove("input-error");
+    }
+
 
 
     const newTask = {

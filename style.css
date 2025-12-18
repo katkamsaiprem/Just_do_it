@@ -63,10 +63,11 @@ li{
 }
 .tasksContainer{
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 3rem;
+    flex-wrap: wrap;
 }
 .taskItem{
     border: 2px solid rebeccapurple;
@@ -75,4 +76,13 @@ li{
 .task-done{
      text-decoration:line-through;
      opacity: 0.5;
+}
+
+.input-error::placeholder {
+    color: red;
+}
+#heading{
+    padding-left: 30px;
+    padding-bottom: 10px;
+
 }
