@@ -71,20 +71,26 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
 }
 
 const handlerClearDoneTasks = () => {
-    if (window.confirm("do you want to Delete all complete tasks?")) {
-        TODOS = TODOS.filter((taskElement) => taskElement.isTaskDone === false)
-        saveTodosInLocalStorage(TODOS)
 
-        DOM.tasksContainer.innerHTML = "";
-        renderTodos(TODOS)
-        updateTaskCounts();
-    }
+
+
+    TODOS = TODOS.filter((taskElement) => taskElement.isTaskDone === false)
+    saveTodosInLocalStorage(TODOS)
+
+    DOM.tasksContainer.innerHTML = "";
+    renderTodos(TODOS)
+    updateTaskCounts();
+
+
 }
 
 const handleSubmit = (e) => {
     e.preventDefault();
 
+
     newTaskFunction();
+
+
 
     saveTodosInLocalStorage(TODOS)
 
@@ -277,14 +283,16 @@ const createAndPushPtag = (task) => {
 
 
 
+
 }
 
 document.addEventListener("DOMContentLoaded", function initApp() {//executes when browser renders the html, this event will trigger after js runs
 
     initDOM();
 
-    DOM.clearButton.addEventListener("click", handlerClearDoneTasks)
     DOM.taskform.addEventListener("submit", handleSubmit)
+    DOM.clearButton.addEventListener("click", handlerClearDoneTasks)
+
 
     const areTodosLoaded = loadTodos()
     areTodosLoaded && renderTodos(TODOS)//shorthand code for if condition

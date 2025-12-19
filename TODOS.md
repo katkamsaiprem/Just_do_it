@@ -50,7 +50,7 @@ Task 2. Visual Done State ✔️
 Task 3. Delete Confirmation✔️
 Task 4. Task Sorting
 Task 5. Clear Completed Tasks ✔️
-Task 6. Task Count Indicator 
+Task 6. Task Count Indicator ✔️
 Task 7. Input Validation Improvements ✔️
 Task 8. Keyboard Accessibility ✔️
 Task 9. Timestamp Formatting✔️
