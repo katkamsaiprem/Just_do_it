@@ -80,11 +80,11 @@ TODOS.sort((a, b) => b.taskId - a.taskId);
 3. **Uses the return value** to decide their order:
 
 ```javascript
-Return Value     |  Meaning
------------------|---------------------------------
-Negative (< 0)   |  Put 'a' BEFORE 'b'
-Zero (= 0)       |  Keep original order
-Positive (> 0)   |  Put 'a' AFTER 'b'
+| Return Value   | Meaning             |
+| -------------- | ------------------- |
+| Negative (< 0) | Put 'a' BEFORE 'b'  |
+| Zero (= 0)     | Keep original order |
+| Positive (> 0) | Put 'a' AFTER 'b'   |
 ```
 
 ## Example with Your Code
@@ -174,7 +174,11 @@ TODOS.sort((a, b) => {
 -----------------AppWriter------------------------------
 shift the data from localStorage to appWriter db
  CRUD
- C -- ✔️
- R -- get data from appWriteDB and update arr
- U -- 
- D --
+ C -- first create obj for local arr then create row in DB and get id from DB then push obj with id property to TODOS then render✔️
+
+
+ R -- get data from appWriteDB and update arr ✔️
+
+ U -- note:- instead of trying to save entire arr, we can directly sync with database ,when create update delete operations occurs . sorting is no need to update in DB , it is only for client side
+
+ D -- get id from event handler and use it to find row then delete it✔️

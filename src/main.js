@@ -9,15 +9,58 @@ let DOM;//lets store dom references
 let ThreeChar = 3;
 let sorting;
 
-const handleTaskDelete = (taskIdToDelete) => {
+const handleTaskDelete = async (taskIdToDelete) => {
   if (!window.confirm("Are you sure you want to delete this task?")) { return }
-  TODOS = TODOS.filter((task) => task.taskId != taskIdToDelete)
-  saveTodosInLocalStorage(TODOS)
-  updateTaskCounts();
+
+  const taskToDelete = TODOS.find(task => task.$id === taskIdToDelete)
+
   const listITemToBeRemoved = document.getElementById(taskIdToDelete);
-  listITemToBeRemoved.remove();
+
+  if (!taskToDelete || !taskIdToDelete) {
+    return console.error("Task not forund");
+  }
+
+  try {
+    await DeleteTaskFromDB(taskIdToDelete)
+    TODOS = TODOS.filter((task) => task.$id !== taskIdToDelete)
+    saveTodosInAppWriteDB(TODOS)
+    updateTaskCounts();
+
+    listITemToBeRemoved.remove();
+  }
+  catch (error) {
+    console.error("Error deleting task: ", error)
+  }
+
+
+
+
 
 }
+
+const DeleteTaskFromDB = async ($id) => {
+  const client = new Client()
+    .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
+    .setProject('695cd776000c67f22dd2'); // Your project ID
+
+  const tablesDB = new TablesDB(client);
+
+  const result = await tablesDB.deleteRow({
+    databaseId: '695e3add0000ece1e383',
+    tableId: 'taskstable',
+    rowId: $id,
+
+  });
+
+  console.log("Task deleted");
+
+  console.log(result);
+  return result;
+
+
+}
+
+
 const handleSorting = (e) => {
   const sortType = e.target.value;
 
@@ -36,7 +79,7 @@ const handleSorting = (e) => {
       //all incomplete tasks appear first all completed tasks appear last
     });
   }
-  saveTodosInLocalStorage(TODOS);
+  saveTodosInAppWriteDB(TODOS);
   DOM.tasksContainer.innerHTML = "";
   renderTodos(TODOS);
   updateTaskCounts()
@@ -75,12 +118,12 @@ const handleTaskEdit = (tasksIdToEdit, taskTextPTag) => {
         taskTextPTag.textContent = originalText;
       }
       //arr changes
-      TODOS = TODOS.map((taskElement) => taskElement.taskId === tasksIdToEdit ?
+      TODOS = TODOS.map((taskElement) => taskElement.$id === tasksIdToEdit ?
         { ...taskElement, taskText: updatedText } : taskElement)
 
 
 
-      //saveTodosInLocalStorage(TODOS);
+      saveTodosInAppWriteDB(TODOS);
       updateTaskCounts();
 
 
@@ -107,7 +150,7 @@ const handlerClearDoneTasks = () => {
 
 
   TODOS = TODOS.filter((taskElement) => taskElement.isTaskDone === false)
-  ////saveTodosInLocalStorage(TODOS)
+  saveTodosInAppWriteDB(TODOS)
 
   DOM.tasksContainer.innerHTML = "";
   renderTodos(TODOS)
@@ -124,7 +167,7 @@ const handleSubmit = (e) => {
 
 
 
-  //saveTodosInLocalStorage(TODOS)
+  saveTodosInAppWriteDB(TODOS)
 
   DOM.taskInput.value = "";
   DOM.taskInput.focus();
@@ -133,54 +176,7 @@ const handleSubmit = (e) => {
 
 const newTaskFunction = async () => {
   //trim removes whitespace between start and end
-  const formatCurrDateTime = (ISOString) => {
-    const date = new Date(ISOString);//string to date obj
-    const currDateTime = new Date();
 
-
-    //create today date with time set to zero
-    //it helps while comparing dates 
-    const today = new Date(
-      currDateTime.getFullYear(),
-      currDateTime.getMonth(),
-      currDateTime.getDate(),
-
-    );
-
-    //create yesterday by copying todays date
-    const yesterday = new Date(today);
-
-    yesterday.setDate(today.getDate() - 1);
-
-    const dateMessage = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-
-    )
-
-    const time = date.toLocaleTimeString([], {
-      hour: "numeric",//hour (1-12)
-      minute: "2-digit",
-      hour12: true,
-    })
-
-    if (dateMessage.getTime() === today.getTime()) {
-      return `Today,${time}`;
-    }
-
-    if (dateMessage.getTime() === yesterday.getTime()) {
-      return `Yesterday,${time}`;
-    }
-
-    const formattedDate = date.toLocaleDateString()//for old date,show full date with time
-
-    return `${formattedDate},${time}}`;
-
-
-
-
-  }
 
 
   if (!DOM.taskInput.value.trim() || DOM.taskInput.value.trim().length <= ThreeChar) {
@@ -199,31 +195,17 @@ const newTaskFunction = async () => {
 
 
   const newTask = {
-    taskId: Math.random(),
+
     taskText: DOM.taskInput.value.trim(),
     isTaskDone: false,
     timeStamp: formatCurrDateTime(new Date().toISOString()),//converting timeStampe into isoString and passing as argument
     createdAt: Date.now(),//we need new timestamp because existing timestamp is sorted
   }
-  // const client = new Client()
-  //   .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
-  //   .setProject('695cd776000c67f22dd2'); // Your project ID
 
-  // const tablesDB = new TablesDB(client);
 
-  // const result = await tablesDB.createRow({
-  //   databaseId: '695e3add0000ece1e383',
-  //   tableId: 'taskstable',
-  //   rowId: ID.unique(),
-  //   data: {
-  //     "taskText": newTask.taskText,
-  //   },
+  await createTodoInAppWriteDB(newTask);
 
-  // });
 
-  saveTodosInAppWriteDB(newTask);
-  createAndPushPtag(newTask);
-  TODOS.push(newTask)
   updateTaskCounts();
 
 
@@ -231,12 +213,12 @@ const newTaskFunction = async () => {
 
 const handleTaskDone = (taskIdToUpdateIsTaskDone, taskTextPTag) => {
   for (let index = 0; index < TODOS.length; index++) {
-    if (TODOS[index].taskId == taskIdToUpdateIsTaskDone) {
+    if (TODOS[index].$id === taskIdToUpdateIsTaskDone) {
       TODOS[index].isTaskDone = !TODOS[index].isTaskDone;
       TODOS[index].isTaskDone ? taskTextPTag.classList.add("task-done") : taskTextPTag.classList.remove("task-done");
 
     }
-    saveTodosInLocalStorage(TODOS)
+    saveTodosInAppWriteDB(TODOS)
   }
   updateTaskCounts();
 
@@ -257,7 +239,7 @@ const initDOM = () => {
 
 
 
-const saveTodosInAppWriteDB = async (newTask) => {
+const createTodoInAppWriteDB = async (newTask) => {
   // const stringifiedTodos = JSON.stringify(todos);
   // localStorage.setItem("todos", stringifiedTodos);
   const client = new Client()
@@ -276,14 +258,78 @@ const saveTodosInAppWriteDB = async (newTask) => {
 
   });
   console.log(result);
-  console.log("row Saved to AppWriteDB");
+  console.log("row created and Saved to AppWriteDB");
+
+
+  const taskWithId = {
+    //use $id form AppWriterDB
+    $id: result.$id,
+    taskText: result.taskText,
+    isTaskDone: result.isTaskDone || false,
+    timeStamp: formatCurrDateTime(result.$createdAt),
+    createdAt: new Date(result.$createdAt).getTime(),
+  }
+
+  //now after we got id from DB ,now push to TODOS arr
+  TODOS.push(taskWithId)
+
+  //Render the object
+  createAndPushPtag(result, newTask);
+
+
+
+}
+const formatCurrDateTime = (ISOString) => {
+  const date = new Date(ISOString);//string to date obj
+  const currDateTime = new Date();
+
+
+  //create today date with time set to zero
+  //it helps while comparing dates 
+  const today = new Date(
+    currDateTime.getFullYear(),
+    currDateTime.getMonth(),
+    currDateTime.getDate(),
+
+  );
+
+  //create yesterday by copying todays date
+  const yesterday = new Date(today);
+
+  yesterday.setDate(today.getDate() - 1);
+
+  const dateMessage = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+
+  )
+
+  const time = date.toLocaleTimeString([], {
+    hour: "numeric",//hour (1-12)
+    minute: "2-digit",
+    hour12: true,
+  })
+
+  if (dateMessage.getTime() === today.getTime()) {
+    return `Today,${time}`;
+  }
+
+  if (dateMessage.getTime() === yesterday.getTime()) {
+    return `Yesterday,${time}`;
+  }
+
+  const formattedDate = date.toLocaleDateString()//for old date,show full date with time
+
+  return `${formattedDate},${time}}`;
+
 
 
 
 }
 
 
-async function loadTodos() {//gets the string array from local storage ,then converts into orignal data form , if array contains data then create copy of it then push to TODOS
+const RetriveTodosFromDB = async () => {//gets the string array from local storage ,then converts into orignal data form , if array contains data then create copy of it then push to TODOS
   // const stringifiedTodos = localStorage.getItem("todos");
   // const todosArray = JSON.parse(stringifiedTodos)
   // if (todosArray && todosArray.length) {
@@ -294,42 +340,90 @@ async function loadTodos() {//gets the string array from local storage ,then con
   // return false
 
 
-  const client = new Client()
-    .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
-    .setProject('695cd776000c67f22dd2'); // Your project ID
-
-  const tablesDB = new TablesDB(client);
-
-  const result = await tablesDB.listRows({
-    databaseId: '695e3add0000ece1e383',
-    tableId: 'taskstable',
-
-  });
-
-  console.log(result);
-  console.log("rows from table loaded");
+  try {
 
 
+
+    const client = new Client()
+      .setEndpoint('https://sgp.cloud.appwrite.io/v1') // Your API Endpoint
+      .setProject('695cd776000c67f22dd2'); // Your project ID
+
+    const tablesDB = new TablesDB(client);
+
+    const result = await tablesDB.listRows({
+      databaseId: '695e3add0000ece1e383',
+      tableId: 'taskstable',
+
+    });
+
+    if (result.rows && result.rows.length) {
+      TODOS = result.rows.map(row => ({
+        $id: row.$id,//id for appwirte operations
+        taskText: row.taskText,
+        isTaskDone: row.isTaskDone || false,
+        timeStamp: formatCurrDateTime(row.$createdAt),
+        createdAt: new Date(row.$createdAt).getTime(),
+      }));
+
+
+
+
+
+      console.log(result);
+      console.log("rows from table loaded");
+      console.log(TODOS);
+      return true;
+
+
+
+
+    }
+  }
+  catch (error) {
+    console.error("Error while retriving todos:", error);
+    return false;
+  }
 
 }
 
+const saveTodosInAppWriteDB = async (TODOS) => {
+
+  const client = new Client()
+    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1') // Your API Endpoint
+    .setProject('<YOUR_PROJECT_ID>'); // Your project ID
+
+  const tablesDB = new TablesDB(client);
+
+  const result = await tablesDB.updateRow({
+    databaseId: '<DATABASE_ID>',
+    tableId: '<TABLE_ID>',
+    rowId: '<ROW_ID>',
+    data: {}, // optional
+    permissions: [Permission.read(Role.any())], // optional
+    transactionId: '<TRANSACTION_ID>' // optional
+  });
+
+  console.log(result);
+
+}
 const renderTodos = (todos) => {
   for (let index = 0; index < todos.length; index++) {
     createAndPushPtag(todos[index])
   }
 }
 
-const createAndPushPtag = (task) => {
+//Render the obj
+const createAndPushPtag = (task, newTaskObj) => {
 
 
   const newListItem = document.createElement("li");
   newListItem.setAttribute("class", "taskItem");
-  newListItem.setAttribute("id", task.taskId)
+  newListItem.setAttribute("id", task.$id)
 
   const checkBoxInput = document.createElement("input");
   checkBoxInput.setAttribute("type", "checkbox");
   checkBoxInput.classList.add("checkbox")
-  checkBoxInput.addEventListener("change", () => handleTaskDone(task.taskId, taskTextPTag))
+  checkBoxInput.addEventListener("change", () => handleTaskDone(task.$id, taskTextPTag))
 
 
   checkBoxInput.checked = task.isTaskDone;
@@ -342,7 +436,7 @@ const createAndPushPtag = (task) => {
   taskTextPTag.textContent = task.taskText;
 
   const timeStampPTag = document.createElement("p");
-  timeStampPTag.textContent = task.timeStamp;
+  timeStampPTag.textContent = newTaskObj ? newTaskObj.timeStamp : task.timeStamp;
 
   taskContentContainer.appendChild(taskTextPTag);
   taskContentContainer.appendChild(timeStampPTag);
@@ -355,14 +449,14 @@ const createAndPushPtag = (task) => {
   editButton.classList.add("editBtn")
   editButton.textContent = "Edit";
 
-  editButton.addEventListener("click", () => handleTaskEdit(task.taskId, taskTextPTag))
+  editButton.addEventListener("click", () => handleTaskEdit(task.$id, taskTextPTag))
 
   const deleteButton = document.createElement("button");
   deleteButton.textContent = "Delete";
   deleteButton.classList.add("taskBtn");
   deleteButton.classList.add("deleteBtn");
 
-  deleteButton.addEventListener("click", () => handleTaskDelete(task.taskId))
+  deleteButton.addEventListener("click", () => handleTaskDelete(task.$id))
 
   taskActionButtonContainer.appendChild(editButton);
   taskActionButtonContainer.appendChild(deleteButton)
@@ -383,7 +477,7 @@ const createAndPushPtag = (task) => {
 document.addEventListener("DOMContentLoaded", async function initApp() {//executes when browser renders the html, this event will trigger after js runs
 
 
-
+  const areTodosLoaded = await RetriveTodosFromDB()
 
   initDOM();
 
@@ -398,7 +492,7 @@ document.addEventListener("DOMContentLoaded", async function initApp() {//execut
   DOM.sortingSelecteElement.addEventListener("change", (e) => handleSorting(e))
 
 
-  const areTodosLoaded = await loadTodos()
+
   areTodosLoaded && renderTodos(TODOS)//shorthand code for if condition
 
   updateTaskCounts();
