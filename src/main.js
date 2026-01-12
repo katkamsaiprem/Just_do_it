@@ -1,4 +1,4 @@
-import { Client, TablesDB, Permission, Role, ID } from "appwrite";
+import { Client, TablesDB, ID } from "appwrite";
 
 
 
@@ -274,6 +274,7 @@ const handleTaskDone = async (taskIdToUpdateIsTaskDone, taskTextPTag) => {
   updateTaskCounts();
 
 }
+
 const initDOM = () => {
   DOM = {};
   //----------DOM nodes---------
